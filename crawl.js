@@ -63,6 +63,6 @@ const writeFile = (name, content) => {
 };
 
 (async () => {
-  await Promise.all(pages(6, 10).map(getMoviesPerPage));
+  await Promise.all(pages(41, 50).map(getMoviesPerPage));
   console.log("Completed!");
 })();
