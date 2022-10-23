@@ -4,10 +4,14 @@ import * as fs from "fs";
 const baseURL = "https://ophim1.com/danh-sach/phim-moi-cap-nhat?page=";
 const pathMovie = "https://ophim1.com/phim/";
 
-const getMovies = async (numberOfPages) => {
-  const slugs = await Promise.all(Array.from({ length: numberOfPages }, (_, i) => i + 1).map(getSlugsPerPage));
-  const movies = await getMoviesFromSlugs(slugs.flat());
-  return movies;
+const pages = (from, to) =>
+  Array.from({ length: to - from + 1 }, (_, i) => i + from);
+
+const getMoviesPerPage = async (page) => {
+  const slugs = await getSlugsPerPage(page);
+  const movies = await getMoviesFromSlugs(slugs);
+  writeFile(page, movies);
+  console.log("Done page " + page);
 };
 
 const getSlugsPerPage = async (number) => {
@@ -54,14 +58,11 @@ const fetchMovie = async (slug) => {
   };
 };
 
-const writeFile = (content) => {
-  fs.writeFileSync("test.json", JSON.stringify(content));
-  console.log("Done!");
+const writeFile = (name, content) => {
+  fs.appendFileSync("movies.json", JSON.stringify(content));
 };
 
 (async () => {
-  const movies = await getMovies(1);
-  writeFile(movies);
-  console.log("Done!");
+  await Promise.all(pages(6, 10).map(getMoviesPerPage));
+  console.log("Completed!");
 })();
-
