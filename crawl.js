@@ -4,14 +4,11 @@ import * as fs from "fs";
 const baseURL = "https://ophim1.com/danh-sach/phim-moi-cap-nhat?page=";
 const pathMovie = "https://ophim1.com/phim/";
 
-const pages = (from, to) =>
-  Array.from({ length: to - from + 1 }, (_, i) => i + from);
-
 const getMoviesPerPage = async (page) => {
   const slugs = await getSlugsPerPage(page);
+  console.log("Crawling page " + page + "...");
   const movies = await getMoviesFromSlugs(slugs);
-  writeFile(page, movies);
-  console.log("Done page " + page);
+  writeFile(movies);
 };
 
 const getSlugsPerPage = async (number) => {
@@ -30,6 +27,7 @@ const fetchMovie = async (slug) => {
     name,
     origin_name,
     thumb_url,
+    poster_url,
     type,
     year,
     country,
@@ -37,14 +35,17 @@ const fetchMovie = async (slug) => {
     quality,
     lang,
     category,
-    time,
   } = data.movie;
 
+  const categoryNames = category.map(({ name }) => name);
+
+  if (categoryNames.includes("Phim 18+")) return;
   return {
     id,
     name,
     origin_name,
     thumb_url,
+    poster_url,
     type,
     slug,
     year,
@@ -52,17 +53,27 @@ const fetchMovie = async (slug) => {
     content: content.replace(/<\/*p>/g, ""),
     quality,
     lang,
-    category: category.map(({ name }) => name),
-    time,
-    // episodes: data.episodes[0].server_data.map(({ filename, link_embed }) => ({ name: filename, url: link_embed })),
+    category: categoryNames,
   };
 };
 
-const writeFile = (name, content) => {
+const writeFile = (content) => {
   fs.appendFileSync("movies.json", JSON.stringify(content));
 };
 
-(async () => {
-  await Promise.all(pages(91, 100).map(getMoviesPerPage));
+const delay = (duration) => {
+  return new Promise((resolve) => setTimeout(resolve, duration));
+};
+
+const crawl = async (numberOfPages) => {
+  let index = 1;
+  while (index <= numberOfPages) {
+    await getMoviesPerPage(index);
+    await delay(1000);
+    index += 1;
+  }
+
   console.log("Completed!");
-})();
+};
+
+crawl(100);
